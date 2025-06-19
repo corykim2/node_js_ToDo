@@ -1,0 +1,85 @@
+<!-- html 부분은 gpt 복사해서 사용 -->
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📋 ToDo 리스트</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="todo-header"> 내 할 일 목록</div>
+
+    <div class="todo-input-area">
+      <input type="text" id="todoInput" placeholder="할 일을 입력하세요..." />
+      <button id="addBtn" onclick="addTodo()">추가</button>
+    </div>
+
+    <ul class="todo-list" id="todoList">
+      <!-- todo 항목들이 여기에 추가됩니다 -->
+    </ul>
+  </div>
+
+  <script>
+    const input = document.getElementById('todoInput');
+    const button = document.getElementById('addBtn');
+    const list = document.getElementById('todoList');
+
+    // 페이지 로드 시 DB에서 할 일 불러오기
+    async function fetchTodos() {
+      try {
+        const res = await fetch('http://localhost:8080/todos');
+        if (!res.ok) throw new Error('목록 불러오기 실패');
+        const todos = await res.json();
+
+        list.innerHTML = ''; // 초기화
+        todos.forEach(todo => {
+          const li = document.createElement('li');
+          li.classList.add('todo-item');
+
+          // 텍스트
+          const span = document.createElement('span');
+          span.textContent = todo.text;
+
+          li.appendChild(span);
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 새 할 일 추가
+    async function addTodo() {
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        const response = await fetch('http://localhost:8080/todos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ todo: text }),
+        });
+
+        if (!response.ok) throw new Error('추가 실패');
+
+        input.value = '';
+        fetchTodos(); // 목록 새로고침
+      } catch (error) {
+        console.error(error);
+        alert('서버에 연결할 수 없습니다.');
+      }
+    }
+
+    button.addEventListener('click', addTodo);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTodo();
+    });
+    fetchTodos();
+  </script>
+</body>
+
+</html>
